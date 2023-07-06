@@ -5,6 +5,7 @@ import { GET_TASKS } from "../queries/taskQueries";
 import { Payload } from "../types/payload";
 import { Task } from "../types/task";
 import AddTask from "./AddTask";
+import Board from "./Board";
 import Header from "./Header"
 import Loading from "./Loading";
 import TaskTable from "./TaskTable"
@@ -27,6 +28,7 @@ const Main = () => {
         <>
           <AddTask userId={userId}/>
           <TaskTable tasks={data?.getTasks} userId={userId}/>
+          <Board tasks={data?.getTasks} userId={userId}/>
         </>
       ) }
     </Stack>
