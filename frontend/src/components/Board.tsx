@@ -13,9 +13,10 @@ import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import Column, { ColumnType } from "./Column";
 import { useState } from "react";
 import { Task } from "../types/task";
+import { useMutation } from "@apollo/client";
+import { UPDATE_TASK } from "../mutations/taskMutations";
 
 export default function Board({tasks, userId}: {tasks: Task[] | undefined, userId: number}) {
-  
   const initialColumns: ColumnType[] = [
     {
       columnId: "NOT_STARTED",
@@ -73,26 +74,35 @@ export default function Board({tasks, userId}: {tasks: Task[] | undefined, userI
     return columns.find((c) => c.columnId === columnId) ?? null;
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
+
+  const [updateTask] = useMutation(UPDATE_TASK);
+
+  const handleDragOver = async (event: DragOverEvent) => {
     const { active, over, delta } = event;
     const activeId = String(active.id);
     const overId = over ? String(over.id) : null;
     const activeColumn = findColumn(activeId);
     const overColumn = findColumn(overId);
+    
     if (!activeColumn || !overColumn || activeColumn === overColumn) {
       return null;
     }
+  
+    const activeItems = activeColumn.cards;
+    const overItems = overColumn.cards;
+    const activeIndex = activeItems.findIndex((i) => i.id === activeId);
+    const overIndex = overItems.findIndex((i) => i.id === overId);
+    const newIndex = () => {
+      const putOnBelowLastItem = overIndex === overItems.length - 1 && delta.y > 0;
+      const modifier = putOnBelowLastItem ? 1 : 0;
+      return overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+    };
+    
+    // The card that is being moved
+    const movedItem = { ...activeItems[activeIndex], task: { ...activeItems[activeIndex].task } };
+    movedItem.task.status = overColumn.columnId;
+  
     setColumns((prevState) => {
-      const activeItems = activeColumn.cards;
-      const overItems = overColumn.cards;
-      const activeIndex = activeItems.findIndex((i) => i.id === activeId);
-      const overIndex = overItems.findIndex((i) => i.id === overId);
-      const newIndex = () => {
-        const putOnBelowLastItem =
-          overIndex === overItems.length - 1 && delta.y > 0;
-        const modifier = putOnBelowLastItem ? 1 : 0;
-        return overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-      };
       return prevState.map((c) => {
         if (c.columnId === activeColumn.columnId) {
           c.cards = activeItems.filter((i) => i.id !== activeId);
@@ -100,7 +110,7 @@ export default function Board({tasks, userId}: {tasks: Task[] | undefined, userI
         } else if (c.columnId === overColumn.columnId) {
           c.cards = [
             ...overItems.slice(0, newIndex()),
-            activeItems[activeIndex],
+            movedItem,
             ...overItems.slice(newIndex(), overItems.length)
           ];
           return c;
@@ -109,7 +119,19 @@ export default function Board({tasks, userId}: {tasks: Task[] | undefined, userI
         }
       });
     });
+  
+    // Updating the backend after state has been updated
+    updateTask({
+      variables: {
+        updateTaskInput: {
+          id: movedItem.task.id,
+          status: movedItem.task.status
+        }
+      }
+    });
   };
+  
+  
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
