@@ -11,51 +11,56 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import Column, { ColumnType } from "./Column";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Task } from "../types/task";
 import { useMutation } from "@apollo/client";
 import { UPDATE_TASK } from "../mutations/taskMutations";
 
-export default function Board({tasks, userId}: {tasks: Task[] | undefined, userId: number}) {
-  const initialColumns: ColumnType[] = [
-    {
-      columnId: "NOT_STARTED",
-      cards: tasks
-      ?tasks
-        .filter((task) => task.status === "NOT_STARTED")
-        .map((task) => ({
-          id: task.id.toString(),
-          task:task,
-          userId:userId
-        }))
-        :[]
-    },
-    {
-      columnId: "IN_PROGRESS",
-      cards: tasks
-      ?tasks
-        .filter((task) => task.status === "IN_PROGRESS")
-        .map((task) => ({
-          id: task.id.toString(),
-          task:task,
-          userId:userId
-        }))
-        :[]
-    },
-    {
-      columnId: "COMPLETED",
-      cards: tasks
-      ?tasks
-        .filter((task) => task.status === "COMPLETED")
-        .map((task) => ({
-          id: task.id.toString(),
-          task:task,
-          userId:userId
-        }))
-        :[]
-    },
-  ];
-  const [columns, setColumns] = useState<ColumnType[]>(initialColumns);
+export default function Board({ tasks, userId }: { tasks: Task[] | undefined, userId: number }) {
+  const [columns, setColumns] = useState<ColumnType[]>([]);
+
+  useEffect(() => {
+    const initialColumns: ColumnType[] = [
+      {
+        columnId: "NOT_STARTED",
+        cards: tasks
+          ? tasks
+            .filter((task) => task.status === "NOT_STARTED")
+            .map((task) => ({
+              id: task.id.toString(),
+              task: task,
+              userId: userId
+            }))
+          : []
+      },
+      {
+        columnId: "IN_PROGRESS",
+        cards: tasks
+          ? tasks
+            .filter((task) => task.status === "IN_PROGRESS")
+            .map((task) => ({
+              id: task.id.toString(),
+              task: task,
+              userId: userId
+            }))
+          : []
+      },
+      {
+        columnId: "COMPLETED",
+        cards: tasks
+          ? tasks
+            .filter((task) => task.status === "COMPLETED")
+            .map((task) => ({
+              id: task.id.toString(),
+              task: task,
+              userId: userId
+            }))
+          : []
+      },
+    ];
+
+    setColumns(initialColumns);
+  }, [tasks, userId]);
 
   const findColumn = (unique: string | null) => {
     if (!unique) {

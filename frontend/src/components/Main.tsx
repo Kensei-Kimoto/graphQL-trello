@@ -8,7 +8,7 @@ import AddTask from "./AddTask";
 import Board from "./Board";
 import Header from "./Header"
 import Loading from "./Loading";
-import TaskTable from "./TaskTable"
+// import TaskTable from "./TaskTable";
 
 const Main = () => {
   const token = localStorage.getItem('token');
@@ -27,7 +27,7 @@ const Main = () => {
       { !loading && !error && (
         <>
           <AddTask userId={userId}/>
-          <TaskTable tasks={data?.getTasks} userId={userId}/>
+          {/* <TaskTable tasks={data?.getTasks} userId={userId}/> */}
           <Board tasks={data?.getTasks} userId={userId}/>
         </>
       ) }
